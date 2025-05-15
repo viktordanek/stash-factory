@@ -89,7 +89,13 @@
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$MOUNT/status"
                                                                             printf '%s\n' "$TARGET"
-                                                                            exit 0
+                                                                            if find "$MOUNT" -mindepth 1 -maxdepth 1 ! -name target -quit
+                                                                            then
+                                                                                mv "$MOUNT" "$MOUNT.garbage.$( date +%s )"
+                                                                                exit 64
+                                                                            else
+                                                                                exit 0
+                                                                            fi
                                                                         else
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$MOUNT/status"
@@ -102,7 +108,13 @@
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$MOUNT/status"
                                                                             printf '%s\n' "$TARGET"
-                                                                            exit 0
+                                                                            if find "$MOUNT" -mindepth 1 -maxdepth 1 ! -name target -quit
+                                                                            then
+                                                                                mv "$MOUNT" "$MOUNT.garbage.$( date +%s )"
+                                                                                exit 64
+                                                                            else
+                                                                                exit 0
+                                                                            fi
                                                                         else
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$MOUNT/status"
