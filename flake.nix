@@ -90,13 +90,13 @@
                                                                         then
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$DIRECTORY/status"
-                                                                            if find "$MOUNT" -mindepth 1 -maxdepth 1 ! -name target -quit
+                                                                            if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ! -name target -quit | wc --lines )" == "0" ]
                                                                             then
-                                                                                mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
-                                                                                exit 64
-                                                                            else
                                                                                 printf '%s\n' "$TARGET"
                                                                                 exit 0
+                                                                            else
+                                                                            mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
+                                                                                exit 64
                                                                             fi
                                                                         else
                                                                             STATUS=$?
@@ -109,13 +109,13 @@
                                                                         then
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$DIRECTORY/status"
-                                                                            if find "$MOUNT" -mindepth 1 -maxdepth 1 ! -name target -quit
+                                                                            if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ! -name target -quit | wc --lines )" == "0" ]
                                                                             then
-                                                                                mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
-                                                                                exit 64
-                                                                            else
                                                                                 printf '%s\n' "$TARGET"
                                                                                 exit 0
+                                                                            else
+                                                                            mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
+                                                                                exit 64
                                                                             fi
                                                                         else
                                                                             STATUS=$?
