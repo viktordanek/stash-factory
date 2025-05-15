@@ -8,18 +8,18 @@
         let
             fun =
                 system :
-                    {
-                        lib.generator =
+                    let
+                        pkgs = import nixpkgs { inherit system ; } ;
+                        in
                             {
-                                hash-length ? 128 ,
-                                generator ,
-                                generation-parameters ,
-                                stash-directory ,
-                                time-mask
-                            } @primary :
-                                let
-                                    pkgs = import nixpkgs { inherit system ; } ;
-                                    in
+                                lib.generator =
+                                    {
+                                        hash-length ? 128 ,
+                                        generator ,
+                                        generation-parameters ,
+                                        stash-directory ,
+                                        time-mask
+                                    } @primary :
                                         pkgs.writeShellApplication
                                             {
                                                 name = "generic generator" ;
@@ -67,7 +67,7 @@
                                                                     fi
                                                                 fi
                                                             '' ;
-                                        } ;
-                } ;
+                                            } ;
+                            } ;
             in flake-utils.lib.eachDefaultSystem fun ;
 }
