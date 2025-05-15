@@ -55,7 +55,7 @@
                                                                 exec 201> "$LOCK"
                                                                 flock -x 201
                                                                 # shellcheck disable=SC2317
-                                                                cleanup ( ) {
+                                                                cleanup( ) {
                                                                     flock -u 201
                                                                     rm --force "$LOCK"
                                                                     rm --force "$STANDARD_INPUT"
