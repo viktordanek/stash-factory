@@ -22,11 +22,19 @@
                                     } @primary :
                                         pkgs.writeShellApplication
                                             {
-                                                name = "generic generator" ;
+                                                name = "generic-generator" ;
                                                 runtimeInputs = [ pkgs.coreutils pkgs.findutils pkgs.flock ] ;
                                                 text =
                                                     let
-                                                        input-hash = builtins.hashString "sha512" ( builtins.toJSON primary ) ;
+                                                        input-hash = builtins.hashString "sha512" ( builtins.toJSON object ) ;
+                                                        object =
+                                                            {
+                                                                hash-length = hash-length ;
+                                                                generator = builtins.toString generator ;
+                                                                generation-parameters = builtins.mapAttrs ( name : builtins.toString ) ;
+                                                                stash-directory = stash-directory ;
+                                                                time-mask = time-mask ;
+                                                            } ;
                                                         in
                                                             ''
                                                                 set -e
