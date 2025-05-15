@@ -40,11 +40,11 @@
                                                             ''
                                                                 set -e
                                                                 TIMESTAMP="$( date "+${ time-mask }" )"
-                                                                STANDARD_INPUT=$( mktemp )
+                                                                STANDARD_INPUT="$( mktemp )"
                                                                 if [ -f /proc/self/fd/0 ] || [ -p /proc/self/fd/0 ]
                                                                 then
                                                                     HAS_STANDARD_INPUT=true
-                                                                    tee > $STANDARD_INPUT
+                                                                    tee > "$STANDARD_INPUT"
                                                                 else
                                                                     HAS_STANDARD_INPUT=false
                                                                 fi
@@ -58,6 +58,7 @@
                                                                 cleanup ( ) {
                                                                     flock -u 201
                                                                     rm --force "$LOCK"
+                                                                    rm --force "$STANDARD_INPUT"
                                                                 }
                                                                 trap cleanup EXIT
                                                                 TARGET="$MOUNT/target"
@@ -71,7 +72,7 @@
                                                                         mv "$MOUNT" "$MOUNT.trash.$( date +%s )"
                                                                     fi
                                                                     mkdir --parents "$MOUNT"
-                                                                    printf '%s' "$@" > "$MOUNT/arguments
+                                                                    printf '%s' "$@" > "$MOUNT/arguments"
                                                                     printf '%s' "$STANDARD_INPUT" > "$MOUNT/standard-input"
                                                                     printf '%s' "$HAS_STANDARD_INPUT" > "$MOUNT/has-standard-input"
                                                                     if $HAS_STANDARD_INPUT
