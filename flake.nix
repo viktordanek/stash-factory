@@ -102,6 +102,7 @@
                                                                             mv "$MOUNT" "$MOUNT.failed.$( date +%s)"
                                                                             exit "$STATUS"
                                                                         fi
+                                                                    fi
                                                                 fi
                                                             '' ;
                                             } ;
