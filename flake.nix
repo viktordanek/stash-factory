@@ -40,7 +40,15 @@
                                                             ''
                                                                 set -e
                                                                 TIMESTAMP="$( date "+${ time-mask }" )"
-                                                                HASH="$( printf "%s%s" "${ input-hash }" "$TIMESTAMP" | sha512sum | cut -c1-${ builtins.toString hash-length } )"
+                                                                STANDARD_INPUT=$( mktemp )
+                                                                if [ -f /proc/self/fd/0 ] || [ -p /proc/self/fd/0 ]
+                                                                then
+                                                                    HAS_STANDARD_INPUT=true
+                                                                    tee > $STANDARD_INPUT
+                                                                else
+                                                                    HAS_STANDARD_INPUT=false
+                                                                fi
+                                                                HASH="$( printf "%s%s" "${ input-hash }" "$TIMESTAMP" "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.toString hash-length } )"
                                                                 MOUNT="${ stash-directory }/$HASH"
                                                                 mkdir --parents "${ stash-directory }"
                                                                 LOCK="$MOUNT.lock"
@@ -63,18 +71,36 @@
                                                                         mv "$MOUNT" "$MOUNT.trash.$( date +%s )"
                                                                     fi
                                                                     mkdir --parents "$MOUNT"
-                                                                    if ${ generator generation-parameters }/bin/${ generator-name } "$TARGET" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                    printf '%s' "$@" > "$MOUNT/arguments
+                                                                    printf '%s' "$STANDARD_INPUT" > "$MOUNT/standard-input"
+                                                                    printf '%s' "$HAS_STANDARD_INPUT" > "$MOUNT/has-standard-input"
+                                                                    if $HAS_STANDARD_INPUT
                                                                     then
-                                                                        STATUS=$?
-                                                                        echo "$STATUS" > "$MOUNT/status"
-                                                                        printf '%s\n' "$TARGET"
-                                                                        exit 0
+                                                                        if cat $STANDARD_INPUT | ${ generator generation-parameters }/bin/${ generator-name } "$TARGET" "$@" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                        then
+                                                                            STATUS=$?
+                                                                            echo "$STATUS" > "$MOUNT/status"
+                                                                            printf '%s\n' "$TARGET"
+                                                                            exit 0
+                                                                        else
+                                                                            STATUS=$?
+                                                                            echo "$STATUS" > "$MOUNT/status"
+                                                                            mv "$MOUNT" "$MOUNT.failed.$( date +%s)"
+                                                                            exit "$STATUS"
+                                                                        fi
                                                                     else
-                                                                        STATUS=$?
-                                                                        echo "$STATUS" > "$MOUNT/status"
-                                                                        mv "$MOUNT" "$MOUNT.failed.$( date +%s)"
-                                                                        exit "$STATUS"
-                                                                    fi
+                                                                        if ${ generator generation-parameters }/bin/${ generator-name } "$TARGET" "$@" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                        then
+                                                                            STATUS=$?
+                                                                            echo "$STATUS" > "$MOUNT/status"
+                                                                            printf '%s\n' "$TARGET"
+                                                                            exit 0
+                                                                        else
+                                                                            STATUS=$?
+                                                                            echo "$STATUS" > "$MOUNT/status"
+                                                                            mv "$MOUNT" "$MOUNT.failed.$( date +%s)"
+                                                                            exit "$STATUS"
+                                                                        fi
                                                                 fi
                                                             '' ;
                                             } ;
