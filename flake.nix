@@ -36,6 +36,13 @@
                                                                 stash-directory = stash-directory ;
                                                                 time-mask = time-mask ;
                                                             } ;
+                                                        user-environment =
+                                                            pkgs.buildFHSUserEnvironment
+                                                                {
+                                                                    extraBwrapArgs = [ "--bind-fs $MOUNT /mount" ] ;
+                                                                    name = "user-env" ;
+                                                                    runScript = "${ generator generation-parameters }/bin/${ generator-name }" ;
+                                                                } ;
                                                         in
                                                             ''
                                                                 set -e
@@ -77,7 +84,7 @@
                                                                     printf '%s' "$HAS_STANDARD_INPUT" > "$MOUNT/has-standard-input"
                                                                     if $HAS_STANDARD_INPUT
                                                                     then
-                                                                        if ${ generator generation-parameters }/bin/${ generator-name } "$TARGET" "$@" < "$STANDARD_INPUT" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                        if ${ user-environment }/bin/user-environment "$TARGET" "$@" < "$STANDARD_INPUT" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
                                                                         then
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$MOUNT/status"
@@ -90,7 +97,7 @@
                                                                             exit "$STATUS"
                                                                         fi
                                                                     else
-                                                                        if ${ generator generation-parameters }/bin/${ generator-name } "$TARGET" "$@" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                        if ${ user-environment }/bin/user-environment "$TARGET" "$@" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
                                                                         then
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$MOUNT/status"
