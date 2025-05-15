@@ -37,7 +37,7 @@
                                                                 time-mask = time-mask ;
                                                             } ;
                                                         user-environment =
-                                                            pkgs.buildFHSUserEnvironment
+                                                            pkgs.buildFHSUserEnv
                                                                 {
                                                                     extraBwrapArgs = [ "--bind-fs $MOUNT /mount" ] ;
                                                                     name = "user-env" ;
