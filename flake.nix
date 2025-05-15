@@ -44,7 +44,7 @@
                                                                 LOCK="$MOUNT.lock"
                                                                 exec 201> "$LOCK"
                                                                 flock -x 201
-                                                                # spellcheck disable=SC2317
+                                                                # shellcheck disable=SC2317
                                                                 cleanup ( ) {
                                                                     flock -u 201
                                                                     rm --force "$LOCK"
