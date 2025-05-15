@@ -23,7 +23,7 @@
                                         pkgs.writeShellApplication
                                             {
                                                 name = "generic generator" ;
-                                                runtimeImports = [ pkgs.coreutils pkgs.findutils pkgs.flock ] ;
+                                                runtimeInputs = [ pkgs.coreutils pkgs.findutils pkgs.flock ] ;
                                                 text =
                                                     let
                                                         input-hash = builtins.hashString "sha512" ( builtins.toJSON primary ) ;
