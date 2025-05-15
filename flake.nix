@@ -39,7 +39,7 @@
                                                         user-environment =
                                                             pkgs.buildFHSUserEnv
                                                                 {
-                                                                    extraBwrapArgs = [ "--fs-bind $MOUNT /mount" ] ;
+                                                                    extraBwrapArgs = [ "--bind $MOUNT /mount" ] ;
                                                                     name = "user-environment" ;
                                                                     runScript = "${ generator generation-parameters }/bin/${ generator-name }" ;
                                                                 } ;
