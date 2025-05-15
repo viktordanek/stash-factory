@@ -19,7 +19,7 @@
                                         generation-parameters ,
                                         stash-directory ,
                                         time-mask
-                                    } @primary :
+                                    } :
                                         pkgs.writeShellApplication
                                             {
                                                 name = "generic-generator" ;
@@ -31,7 +31,7 @@
                                                             {
                                                                 hash-length = hash-length ;
                                                                 generator = builtins.toString generator ;
-                                                                generation-parameters = builtins.mapAttrs ( name : builtins.toString ) ;
+                                                                generation-parameters = builtins.mapAttrs ( name : builtins.toString ) generation-parameters ;
                                                                 stash-directory = stash-directory ;
                                                                 time-mask = time-mask ;
                                                             } ;
