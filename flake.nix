@@ -84,7 +84,7 @@
                                                                     printf '%s' "$HAS_STANDARD_INPUT" > "$MOUNT/has-standard-input"
                                                                     if $HAS_STANDARD_INPUT
                                                                     then
-                                                                        if ${ user-environment }/bin/user-environment "$TARGET" "$@" < "$STANDARD_INPUT" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                        if ${ user-environment }/bin/user-environment "$@" < "$STANDARD_INPUT" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
                                                                         then
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$MOUNT/status"
@@ -103,7 +103,7 @@
                                                                             exit "$STATUS"
                                                                         fi
                                                                     else
-                                                                        if ${ user-environment }/bin/user-environment "$TARGET" "$@" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                        if ${ user-environment }/bin/user-environment "$@" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
                                                                         then
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$MOUNT/status"
