@@ -4,6 +4,7 @@
         {
             lib.generator =
                 {
+                    hash-length ? 128 ,
                     generator ,
                     generation-parameters ,
                     stash-directory ,
@@ -20,7 +21,7 @@
                                         ''
                                             set -e
                                             TIMESTAMP="$( date "${ time-mask }" )"
-                                            HASH="$( printf "%s%s" "${ input-hash }" "$TIMESTAMP" | sha512sum | cut -c1-128 )"
+                                            HASH="$( printf "%s%s" "${ input-hash }" "$TIMESTAMP" | sha512sum | cut -c1-${ builtins.toString hash-length } )"
                                             MOUNT="${ stash-directory }/$HASH"
                                             mkdir --parents "${ stash-directory }"
                                             LOCK="$MOUNT.lock"
