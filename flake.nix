@@ -56,7 +56,7 @@
                                                                     HAS_STANDARD_INPUT=false
                                                                 fi
                                                                 HASH="$( printf "%s%s" "${ input-hash }" "$TIMESTAMP" "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.toString hash-length } )"
-                                                                MOUNT="${ stash-directory }/$HASH"
+                                                                export MOUNT="${ stash-directory }/$HASH"
                                                                 mkdir --parents "${ stash-directory }"
                                                                 LOCK="$MOUNT.lock"
                                                                 exec 201> "$LOCK"
