@@ -77,7 +77,7 @@
                                                                     printf '%s' "$HAS_STANDARD_INPUT" > "$MOUNT/has-standard-input"
                                                                     if $HAS_STANDARD_INPUT
                                                                     then
-                                                                        if cat $STANDARD_INPUT | ${ generator generation-parameters }/bin/${ generator-name } "$TARGET" "$@" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                        if cat "$STANDARD_INPUT" | ${ generator generation-parameters }/bin/${ generator-name } "$TARGET" "$@" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
                                                                         then
                                                                             STATUS=$?
                                                                             echo "$STATUS" > "$MOUNT/status"
