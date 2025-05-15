@@ -56,9 +56,9 @@
                                                                     HAS_STANDARD_INPUT=false
                                                                 fi
                                                                 HASH="$( printf "%s%s" "${ input-hash }" "$TIMESTAMP" "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.toString hash-length } )"
-                                                                export MOUNT="${ stash-directory }/$HASH"
+                                                                DIRECTORY="${ stash-directory }/$HASH"
                                                                 mkdir --parents "${ stash-directory }"
-                                                                LOCK="$MOUNT.lock"
+                                                                LOCK="$DIRECTORY.lock"
                                                                 exec 201> "$LOCK"
                                                                 flock -x 201
                                                                 # shellcheck disable=SC2317
@@ -68,57 +68,59 @@
                                                                     rm --force "$STANDARD_INPUT"
                                                                 }
                                                                 trap cleanup EXIT
+                                                                export MOUNT="$DIRECTORY/mount"
                                                                 TARGET="$MOUNT/target"
-                                                                if [ -d "$MOUNT" ]
+                                                                if [ -d "$DIRECTORY" ]
                                                                 then
                                                                     printf '%s\n' "$TARGET"
                                                                     exit 0
                                                                 else
-                                                                    if [ -e "$MOUNT" ]
+                                                                    if [ -e "$DIRECTORY" ]
                                                                     then
-                                                                        mv "$MOUNT" "$MOUNT.trash.$( date +%s )"
+                                                                        mv "$DIRECTORY" "$DIRECTORY.trash.$( date +%s )"
                                                                     fi
+                                                                    mkdir --parents "$DIRECTORY"
+                                                                    printf '%s' "$@" > "$DIRECTORY/arguments"
+                                                                    printf '%s' "$STANDARD_INPUT" > "$DIRECTORY/standard-input"
+                                                                    printf '%s' "$HAS_STANDARD_INPUT" > "$DIRECTORY/has-standard-input"
                                                                     mkdir --parents "$MOUNT"
-                                                                    printf '%s' "$@" > "$MOUNT/arguments"
-                                                                    printf '%s' "$STANDARD_INPUT" > "$MOUNT/standard-input"
-                                                                    printf '%s' "$HAS_STANDARD_INPUT" > "$MOUNT/has-standard-input"
                                                                     if $HAS_STANDARD_INPUT
                                                                     then
-                                                                        if ${ user-environment }/bin/user-environment "$@" < "$STANDARD_INPUT" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                        if ${ user-environment }/bin/user-environment "$@" < "$STANDARD_INPUT" > "$DIRECTORY/standard-output" 2> "$DIRECTORY/standard-error"
                                                                         then
                                                                             STATUS=$?
-                                                                            echo "$STATUS" > "$MOUNT/status"
-                                                                            printf '%s\n' "$TARGET"
+                                                                            echo "$STATUS" > "$DIRECTORY/status"
                                                                             if find "$MOUNT" -mindepth 1 -maxdepth 1 ! -name target -quit
                                                                             then
-                                                                                mv "$MOUNT" "$MOUNT.garbage.$( date +%s )"
+                                                                                mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
                                                                                 exit 64
                                                                             else
+                                                                                printf '%s\n' "$TARGET"
                                                                                 exit 0
                                                                             fi
                                                                         else
                                                                             STATUS=$?
-                                                                            echo "$STATUS" > "$MOUNT/status"
-                                                                            mv "$MOUNT" "$MOUNT.failed.$( date +%s)"
+                                                                            echo "$STATUS" > "$DIRECTORY/status"
+                                                                            mv "$DIRECTORY" "$DIRECTORY.failed.$( date +%s)"
                                                                             exit "$STATUS"
                                                                         fi
                                                                     else
-                                                                        if ${ user-environment }/bin/user-environment "$@" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                        if ${ user-environment }/bin/user-environment "$@" > "$DIRECTORY/standard-output" 2> "$DIRECTORY/standard-error"
                                                                         then
                                                                             STATUS=$?
-                                                                            echo "$STATUS" > "$MOUNT/status"
-                                                                            printf '%s\n' "$TARGET"
+                                                                            echo "$STATUS" > "$DIRECTORY/status"
                                                                             if find "$MOUNT" -mindepth 1 -maxdepth 1 ! -name target -quit
                                                                             then
-                                                                                mv "$MOUNT" "$MOUNT.garbage.$( date +%s )"
+                                                                                mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
                                                                                 exit 64
                                                                             else
+                                                                                printf '%s\n' "$TARGET"
                                                                                 exit 0
                                                                             fi
                                                                         else
                                                                             STATUS=$?
-                                                                            echo "$STATUS" > "$MOUNT/status"
-                                                                            mv "$MOUNT" "$MOUNT.failed.$( date +%s)"
+                                                                            echo "$STATUS" > "$DIRECTORY/status"
+                                                                            mv "$DIRECTORY" "$DIRECTORY.failed.$( date +%s)"
                                                                             exit "$STATUS"
                                                                         fi
                                                                     fi
