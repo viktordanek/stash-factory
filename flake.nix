@@ -30,8 +30,8 @@
                                                         object =
                                                             {
                                                                 hash-length = hash-length ;
-                                                                generator = builtins.toString generator ;
-                                                                generation-parameters = builtins.mapAttrs ( name : builtins.toString ) generation-parameters ;
+                                                                # generator = builtins.toString generator ;
+                                                                # generation-parameters = builtins.mapAttrs ( name : builtins.toString ) generation-parameters ;
                                                                 stash-directory = stash-directory ;
                                                                 time-mask = time-mask ;
                                                             } ;
