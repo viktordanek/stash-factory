@@ -16,13 +16,14 @@
                                     {
                                         hash-length ? 128 ,
                                         generator ,
+                                        name ,
                                         generation-parameters ,
                                         stash-directory ,
                                         time-mask
                                     } :
                                         pkgs.writeShellApplication
                                             {
-                                                name = "generic-generator" ;
+                                                name = name ;
                                                 runtimeInputs = [ pkgs.coreutils pkgs.findutils pkgs.flock ] ;
                                                 text =
                                                     let
@@ -37,7 +38,7 @@
                                                         in
                                                             ''
                                                                 set -e
-                                                                TIMESTAMP="$( date "${ time-mask }" )"
+                                                                TIMESTAMP="$( date "+${ time-mask }" )"
                                                                 HASH="$( printf "%s%s" "${ input-hash }" "$TIMESTAMP" | sha512sum | cut -c1-${ builtins.toString hash-length } )"
                                                                 MOUNT="${ stash-directory }/$HASH"
                                                                 mkdir --parents "${ stash-directory }"
