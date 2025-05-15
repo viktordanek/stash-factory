@@ -16,8 +16,9 @@
                                     {
                                         hash-length ? 128 ,
                                         generator ,
-                                        name ,
+                                        generator-name ,
                                         generation-parameters ,
+                                        name ,
                                         stash-directory ,
                                         time-mask
                                     } :
@@ -62,7 +63,7 @@
                                                                         mv "$MOUNT" "$MOUNT.trash.$( date +%s )"
                                                                     fi
                                                                     mkdir --parents "$MOUNT"
-                                                                    if ${ generator generation-parameters } "$TARGET" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                    if ${ generator generation-parameters }/bin/${ generator-name } "$TARGET" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
                                                                     then
                                                                         STATUS=$?
                                                                         echo "$STATUS" > "$MOUNT/status"
