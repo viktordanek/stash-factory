@@ -64,7 +64,7 @@
                                                     fi
                                                 '' ;
                             } ;
-                    pkgs = import nixpkgs { inherit system ; } ;
                 } ;
+            pkgs = import nixpkgs { inherit system ; } ;
             in flake-utils.lib.eachDefaultSystem fun ;
 }
