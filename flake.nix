@@ -30,8 +30,7 @@
                                                         object =
                                                             {
                                                                 hash-length = hash-length ;
-                                                                # generator = builtins.toString generator ;
-                                                                # generation-parameters = builtins.mapAttrs ( name : builtins.toString ) generation-parameters ;
+                                                                generated = builtins.toString ( generator generation-parameters ) ;
                                                                 stash-directory = stash-directory ;
                                                                 time-mask = time-mask ;
                                                             } ;
@@ -61,7 +60,7 @@
                                                                         mv "$MOUNT" "$MOUNT.trash.$( date +%s )"
                                                                     fi
                                                                     mkdir --parents "$MOUNT"
-                                                                    if ${ generator.generate generation-parameters } "$TARGET" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
+                                                                    if ${ generator generation-parameters } "$TARGET" > "$MOUNT/standard-output" 2> "$MOUNT/standard-error"
                                                                     then
                                                                         STATUS=$?
                                                                         echo "$STATUS" > "$MOUNT/status"
