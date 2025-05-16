@@ -5,7 +5,7 @@
             nixpkgs.url = "github:Nixos/nixpkgs/nixos-23.11" ;
             visitor.url = "github:viktordanek/visitor" ;
         } ;
-    outputs = { flake-utils , nixpkgs , self } :
+    outputs = { flake-utils , nixpkgs , self , visitor } :
         let
             fun =
                 system :
