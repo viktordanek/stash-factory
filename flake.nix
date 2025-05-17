@@ -2,10 +2,9 @@
     inputs =
         {
             flake-utils.url = "github:numtide/flake-utils" ;
-            nixpkgs.url = "github:Nixos/nixpkgs/nixos-23.11" ;
             visitor.url = "github:viktordanek/visitor" ;
         } ;
-    outputs = { flake-utils , nixpkgs , self , visitor } :
+    outputs = { flake-utils , self , visitor } :
         let
             fun =
                 system :
@@ -37,7 +36,7 @@
                                                     hash-length =
                                                         visitor.lib.${ system }
                                                             {
-                                                                int = path : value : value ;
+                                                                int = path : value : builtins.toString value ;
                                                             }
                                                             hash-length ;
                                                     generator =
@@ -96,13 +95,14 @@
                                                                 input-hash = builtins.hashString "sha512" ( builtins.toJSON object ) ;
                                                                 object =
                                                                     [
-                                                                        factory-name
-                                                                        hash-length
-                                                                        path
-                                                                        stash-directory
-                                                                        targets
-                                                                        time-mask
-                                                                        ( builtins.toString user-environment )
+                                                                        primary.factory-name
+                                                                        primary.hash-length
+                                                                        primary.generator-name
+                                                                        primary.path
+                                                                        primary.stash-directory
+                                                                        primary.targets
+                                                                        primary.time-mask
+                                                                        user-environment
                                                                     ] ;
                                                                 user-environment =
                                                                     pkgs.buildFHSUserEnv
@@ -111,7 +111,7 @@
                                                                             name = "user-environment" ;
                                                                             runScript = "${ primary.generator primary.generation-parameters }/bin/${ primary.generator-name }" ;
                                                                         } ;
-                                                                in
+                                                                x =
                                                                     ''
                                                                         set -e
                                                                         TIMESTAMP="$( date "+${ primary.time-mask }" )"
@@ -123,7 +123,7 @@
                                                                         else
                                                                             HAS_STANDARD_INPUT=false
                                                                         fi
-                                                                        HASH="$( printf "%s%s" "${ input-hash }" "$TIMESTAMP" "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.toString primary.hash-length } )"
+                                                                        HASH="$( printf "%s%s%s%s%s" "${ input-hash }" "$TIMESTAMP" "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.toString primary.hash-length } )"
                                                                         DIRECTORY="${ primary.stash-directory }/$HASH"
                                                                         mkdir --parents "${ primary.stash-directory }"
                                                                         LOCK="$DIRECTORY.lock"
@@ -200,6 +200,20 @@
                                                                                 fi
                                                                             fi
                                                                         fi
+                                                                    '' ;
+                                                                in
+                                                                    ''
+                                                                        set -e
+                                                                        TIMESTAMP="$( date "+${ primary.time-mask }" )"
+                                                                        STANDARD_INPUT="$( mktemp )"
+                                                                        if [ -f /proc/self/fd/0 ] || [ -p /proc/self/fd/0 ]
+                                                                        then
+                                                                            HAS_STANDARD_INPUT=true
+                                                                            tee > "$STANDARD_INPUT"
+                                                                        else
+                                                                            HAS_STANDARD_INPUT=false
+                                                                        fi
+                                                                        HASH="$( echo "${ input-hash }" "$TIMESTAMP" "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.trace primary.hash-length primary.hash-length } )"
                                                                     '' ;
                                                     } ;
                             } ;
