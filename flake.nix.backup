@@ -1,7 +1,11 @@
 {
-    inputs = { visitor.url = "github:viktordanek/visitor/scratch/d926f8ea-1fdc-441c-9fd9-8abbc5e13fdf" ; } ;
+    inputs =
+        {
+            flake-utils.url = "github:numtide/flake-utils" ;
+            visitor.url = "github:viktordanek/visitor" ;
+        } ;
     outputs =
-        { self , visitor } :
+        { flake-utils , self , visitor } :
             {
                 lib.generator =
                     {
@@ -14,45 +18,53 @@
                         path ? null ,
                         stash-directory ,
                         system ,
-                        targets ? [ ]
+                        targets ? [ ] ,
+                        time-mask
                     } :
                         let
-                            pkgs = nixpkgs.legacyPackages.${ primary.system } ;
+                            pkgs = builtins.trace "STASH_FACTORY 2" ( primary.nixpkgs.legacyPackages.${ primary.system } ) ;
                             primary =
                                 {
                                     factory-name =
-                                        visitor.lib.implementation
+                                        visitor.lib.${ system }
                                             {
                                                 string = path : value : value ;
                                             }
                                             factory-name ;
                                     hash-length =
-                                        visitor.lib.implementation
+                                        visitor.lib.${ system }
                                             {
                                                 int = path : value : builtins.toString value ;
                                             }
                                             hash-length ;
                                     generator =
-                                        visitor.lib.implementation
+                                        visitor.lib.${ system }
                                             {
                                                 lambda = path : value : value ;
                                             }
                                             generator ;
                                     generation-parameters =
-                                        visitor.lib.implementation
+                                        visitor.lib.${ system }
                                             {
                                                 null = path : value : { } ;
                                                 set = path : set : set ;
                                             }
                                             generation-parameters ;
                                     generator-name =
-                                        visitor.lib.implementation
+                                        visitor.lib.${ system }
                                             {
                                                 string = path : value : value ;
                                             }
                                             generator-name ;
+                                    nixpkgs =
+                                        visitor.lib.${ system }
+                                            {
+                                                set = path : set : builtins.trace "stash-factory.nixpkgs" set ;
+                                                string = path : value : builtins.throw "CAUGHT STRING ${ value }" ;
+                                            }
+                                        nixpkgs ;
                                     path =
-                                        visitor.lib.implementation
+                                        visitor.lib.${ system }
                                             {
                                                 int = path : value : [ path value ] ;
                                                 null = path : value : [ path value ] ;
@@ -60,25 +72,32 @@
                                             }
                                             path ;
                                     stash-directory =
-                                        visitor.lib.implementation
+                                        visitor.lib.${ system }
                                             {
                                                 string = path : value : value ;
                                             }
                                             stash-directory ;
                                     system =
-                                        visitor.lib.implementation
+                                        visitor.lib.${ system }
                                             {
                                                 string = path : value : value ;
                                             }
                                             system ;
                                     targets =
-                                        visitor.lib.implementation
+                                        visitor.lib.${ system }
                                             {
                                                 string = path : value : value ;
                                             }
                                             targets ;
+                                    time-mask =
+                                        visitor.lib.${ system }
+                                            {
+                                                string = path : value : value ;
+                                            }
+                                            time-mask ;
                                 } ;
                             in
+                                builtins.trace "pkgs.writeShellApplicati0n" (
                                 pkgs.writeShellApplication
                                     {
                                         name = factory-name ;
@@ -88,25 +107,27 @@
                                                 input-hash = builtins.hashString "sha512" ( builtins.toJSON object ) ;
                                                 object =
                                                     [
-                                                        primary.factory-name
-                                                        primary.hash-length
-                                                        primary.generator-name
-                                                        primary.path
-                                                        primary.stash-directory
-                                                        primary.system
-                                                        primary.targets
-                                                        user-environment
+                                                        # primary.factory-name
+                                                        # primary.hash-length
+                                                        # primary.generator-name
+                                                        # primary.path
+                                                        # primary.stash-directory
+                                                        # primary.system
+                                                        # primary.targets
+                                                        # primary.time-mask
+                                                        # user-environment
                                                     ] ;
                                                 user-environment =
                                                     pkgs.buildFHSUserEnv
                                                         {
                                                             extraBwrapArgs = [ "--bind $MOUNT /mount" ] ;
                                                             name = "user-environment" ;
-                                                            runScript = "${ generator generation-parameters }/bin/${ primary.generator-name }" ;
+                                                            runScript = "${ primary.generator primary.generation-parameters }/bin/${ primary.generator-name }" ;
                                                         } ;
-                                                in
+                                                x =
                                                     ''
                                                         set -e
+                                                        TIMESTAMP="$( date "+${ primary.time-mask }" )"
                                                         STANDARD_INPUT="$( mktemp )"
                                                         if [ -f /proc/self/fd/0 ] || [ -p /proc/self/fd/0 ]
                                                         then
@@ -115,7 +136,7 @@
                                                         else
                                                             HAS_STANDARD_INPUT=false
                                                         fi
-                                                        HASH="$( echo "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.trace primary.hash-length primary.hash-length } )"
+                                                        HASH="$( echo "$TIMESTAMP" "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.trace primary.hash-length primary.hash-length } )"
                                                         DIRECTORY="${ primary.stash-directory }/$HASH"
                                                         mkdir --parents "${ primary.stash-directory }"
                                                         LOCK="$DIRECTORY.lock"
@@ -126,7 +147,6 @@
                                                             flock -u 201
                                                             rm --force "$LOCK"
                                                             rm --force "$STANDARD_INPUT"
-                                                        }
                                                         trap cleanup EXIT
                                                         export MOUNT="$DIRECTORY/mount"
                                                         if [ -d "$DIRECTORY" ]
@@ -149,9 +169,9 @@
                                                                 then
                                                                     STATUS=$?
                                                                     echo "$STATUS" > "$DIRECTORY/status"
-                                                                    if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "-name ${ target }" ) primary.targets ) } | wc --lines )" != "${ builtins.toString ( builtins.length primary.targets ) }" ]
+                                                                    if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "-name ${ target }" ) primary.targets ) } | wc --lines )" != "${ builtins.length primary.targets }" ]
                                                                     then
-                                                                        mv "$DIRECTORY" "$DIRECTORY.target.$( date +%s )"
+                                                                    mv "$DIRECTORY" "$DIRECTORY.target.$( date +%s )"
                                                                         exit 64
                                                                     elif [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "! -name ${ target }" ) primary.targets ) } -quit | wc --lines )" != "0" ]
                                                                     then
@@ -172,13 +192,13 @@
                                                                 then
                                                                     STATUS=$?
                                                                     echo "$STATUS" > "$DIRECTORY/status"
-                                                                    if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "-name ${ target }" ) primary.targets ) } | wc --lines )" != "${ builtins.toString ( builtins.length primary.targets ) }" ]
+                                                                    if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "-name ${ target }" ) primary.targets ) } | wc --lines )" != "${ builtins.length primary.targets }" ]
                                                                     then
                                                                     mv "$DIRECTORY" "$DIRECTORY.target.$( date +%s )"
                                                                         exit 64
                                                                     elif [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "! -name ${ target }" ) primary.targets ) } -quit | wc --lines )" != "0" ]
                                                                     then
-                                                                        mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
+                                                                    mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
                                                                         exit 65
                                                                     else
                                                                         printf '%s\n' "$MOUNT"
@@ -193,6 +213,9 @@
                                                             fi
                                                         fi
                                                     '' ;
-                                    } ;
+                                                in
+                                                    ''
+                                                    '' ;
+                                    } ) ;
             } ;
 }
