@@ -115,7 +115,7 @@
                                                         else
                                                             HAS_STANDARD_INPUT=false
                                                         fi
-                                                        HASH="$( echo ${ input-hash } "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.trace primary.hash-length primary.hash-length } )"
+                                                        HASH="$( echo ${ input-hash } "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ primary.hash-length } )"
                                                         DIRECTORY="${ primary.stash-directory }/$HASH"
                                                         mkdir --parents "${ primary.stash-directory }"
                                                         LOCK="$DIRECTORY.lock"
