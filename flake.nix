@@ -115,7 +115,7 @@
                                                         else
                                                             HAS_STANDARD_INPUT=false
                                                         fi
-                                                        HASH="$( echo "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.trace primary.hash-length primary.hash-length } )"
+                                                        HASH="$( echo ${ input-hash } "$@" "$HAS_STANDARD_INPUT" "$( cat "$STANDARD_INPUT" )" | sha512sum | cut -c1-${ builtins.trace primary.hash-length primary.hash-length } )"
                                                         DIRECTORY="${ primary.stash-directory }/$HASH"
                                                         mkdir --parents "${ primary.stash-directory }"
                                                         LOCK="$DIRECTORY.lock"
@@ -172,14 +172,21 @@
                                                                 then
                                                                     STATUS=$?
                                                                     echo "$STATUS" > "$DIRECTORY/status"
-                                                                    if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "-name ${ target }" ) primary.targets ) } | wc --lines )" != "${ builtins.toString ( builtins.length primary.targets ) }" ]
+                                                                    if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 \( ${ builtins.concatStringsSep " -o " ( builtins.map ( target : "-name ${ target }" ) primary.targets ) } \) | wc --lines )" != "${ builtins.toString ( builtins.length primary.targets ) }" ]
                                                                     then
-                                                                    mv "$DIRECTORY" "$DIRECTORY.target.$( date +%s )"
+                                                                        echo 64 > "$DIRECTORY/FAILURE"
+                                                                        mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
                                                                         exit 64
                                                                     elif [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "! -name ${ target }" ) primary.targets ) } -quit | wc --lines )" != "0" ]
                                                                     then
-                                                                        mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
+                                                                        echo 65 > "$DIRECTORY/FAILURE"
+                                                                        mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
                                                                         exit 65
+                                                                    elif [ -s "$DIRECTORY/standard-error" ]
+                                                                    then
+                                                                        echo 66 > "$DIRECTORY/FAILURE"
+                                                                        mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
+                                                                        exit 66
                                                                     else
                                                                         printf '%s\n' "$MOUNT"
                                                                         exit 0
@@ -187,7 +194,8 @@
                                                                 else
                                                                     STATUS=$?
                                                                     echo "$STATUS" > "$DIRECTORY/status"
-                                                                    mv "$DIRECTORY" "$DIRECTORY.failed.$( date +%s)"
+                                                                    echo 67 > "$DIRECTORY/FAILURE"
+                                                                    mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
                                                                     exit "$STATUS"
                                                                 fi
                                                             fi
