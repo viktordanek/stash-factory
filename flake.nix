@@ -139,64 +139,52 @@
                                                                 mv "$DIRECTORY" "$DIRECTORY.trash.$( date +%s )"
                                                             fi
                                                             mkdir --parents "$DIRECTORY"
-                                                            printf '%s' "$@" > "$DIRECTORY/arguments"
-                                                            printf '%s' "$STANDARD_INPUT" > "$DIRECTORY/standard-input"
+                                                            echo "$@" > "$DIRECTORY/arguments"
+                                                            cat "$STANDARD_INPUT" > "$DIRECTORY/standard-input"
                                                             printf '%s' "$HAS_STANDARD_INPUT" > "$DIRECTORY/has-standard-input"
                                                             mkdir --parents "$MOUNT"
-                                                            if $HAS_STANDARD_INPUT
+                                                            process_success( ) {
+                                                                echo "$1" > "$DIRECTORY/status"
+                                                                if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 \( ${ builtins.concatStringsSep " -o " ( builtins.map ( target : "-name ${ target }" ) primary.targets ) } \) | wc --lines )" != "${ builtins.toString ( builtins.length primary.targets ) }" ]
+                                                                then
+                                                                    echo 64 > "$DIRECTORY/FAILURE"
+                                                                    mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
+                                                                    exit 64
+                                                                elif [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "! -name ${ target }" ) primary.targets ) } -quit | wc --lines )" != "0" ]
+                                                                then
+                                                                    echo 65 > "$DIRECTORY/FAILURE"
+                                                                    mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
+                                                                    exit 65
+                                                                elif [ -s "$DIRECTORY/standard-error" ]
+                                                                then
+                                                                    echo 66 > "$DIRECTORY/FAILURE"
+                                                                    mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
+                                                                    exit 66
+                                                                else
+                                                                    printf '%s\n' "$MOUNT"
+                                                                    exit 0
+                                                                fi
+                                                            }
+                                                            process_failure( ) {
+                                                                echo "$1" > "$DIRECTORY/status"
+                                                                echo 67 > "$DIRECTORY/FAILURE"
+                                                                mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
+                                                                exit "$1"
+                                                            }
+                                                            if "$HAS_STANDARD_INPUT"
                                                             then
                                                                 if ${ user-environment }/bin/user-environment "$@" < "$STANDARD_INPUT" > "$DIRECTORY/standard-output" 2> "$DIRECTORY/standard-error"
                                                                 then
-                                                                    STATUS=$?
-                                                                    echo "$STATUS" > "$DIRECTORY/status"
-                                                                    if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "-name ${ target }" ) primary.targets ) } | wc --lines )" != "${ builtins.toString ( builtins.length primary.targets ) }" ]
-                                                                    then
-                                                                        mv "$DIRECTORY" "$DIRECTORY.target.$( date +%s )"
-                                                                        exit 64
-                                                                    elif [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "! -name ${ target }" ) primary.targets ) } -quit | wc --lines )" != "0" ]
-                                                                    then
-                                                                    mv "$DIRECTORY" "$DIRECTORY.garbage.$( date +%s )"
-                                                                        exit 65
-                                                                    else
-                                                                        printf '%s\n' "$MOUNT"
-                                                                        exit 0
-                                                                    fi
+                                                                    process_success "$?"
                                                                 else
-                                                                    STATUS=$?
-                                                                    echo "$STATUS" > "$DIRECTORY/status"
-                                                                    mv "$DIRECTORY" "$DIRECTORY.failed.$( date +%s)"
-                                                                    exit "$STATUS"
+                                                                    process_failure "$?"
                                                                 fi
                                                             else
                                                                 if ${ user-environment }/bin/user-environment "$@" > "$DIRECTORY/standard-output" 2> "$DIRECTORY/standard-error"
                                                                 then
-                                                                    STATUS=$?
-                                                                    echo "$STATUS" > "$DIRECTORY/status"
-                                                                    if [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 \( ${ builtins.concatStringsSep " -o " ( builtins.map ( target : "-name ${ target }" ) primary.targets ) } \) | wc --lines )" != "${ builtins.toString ( builtins.length primary.targets ) }" ]
-                                                                    then
-                                                                        echo 64 > "$DIRECTORY/FAILURE"
-                                                                        mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
-                                                                        exit 64
-                                                                    elif [ "$( find "$MOUNT" -mindepth 1 -maxdepth 1 ${ builtins.concatStringsSep " " ( builtins.map ( target : "! -name ${ target }" ) primary.targets ) } -quit | wc --lines )" != "0" ]
-                                                                    then
-                                                                        echo 65 > "$DIRECTORY/FAILURE"
-                                                                        mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
-                                                                        exit 65
-                                                                    elif [ -s "$DIRECTORY/standard-error" ]
-                                                                    then
-                                                                        echo 66 > "$DIRECTORY/FAILURE"
-                                                                        mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
-                                                                        exit 66
-                                                                    else
-                                                                        printf '%s\n' "$MOUNT"
-                                                                        exit 0
-                                                                    fi
+                                                                    process_success "$?"
                                                                 else
-                                                                    STATUS=$?
-                                                                    echo "$STATUS" > "$DIRECTORY/status"
-                                                                    echo 67 > "$DIRECTORY/FAILURE"
-                                                                    mv "$DIRECTORY" "$( mktemp --dry-run "$DIRECTORY.XXXXXXXX" )"
-                                                                    exit "$STATUS"
+                                                                    process_failure "$?"
                                                                 fi
                                                             fi
                                                         fi
